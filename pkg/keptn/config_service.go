@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-
-	"github.com/keptn/go-utils/pkg/configuration-service/models"
 )
 
 // ConfigService represents the interface for accessing the configuration service
@@ -18,7 +16,7 @@ type ConfigService interface {
 	getHTTPClient() *http.Client
 }
 
-func post(uri string, data []byte, c ConfigService) (*models.Error, error) {
+func post(uri string, data []byte, c ConfigService) (*Error, error) {
 
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	req, err := http.NewRequest("POST", uri, bytes.NewBuffer(data))
@@ -40,7 +38,7 @@ func post(uri string, data []byte, c ConfigService) (*models.Error, error) {
 		return nil, err
 	}
 
-	var respErr models.Error
+	var respErr Error
 	err = json.Unmarshal(body, &respErr)
 	if err != nil {
 		return nil, err
@@ -49,7 +47,7 @@ func post(uri string, data []byte, c ConfigService) (*models.Error, error) {
 	return &respErr, nil
 }
 
-func delete(uri string, c ConfigService) (*models.Error, error) {
+func delete(uri string, c ConfigService) (*Error, error) {
 
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	req, err := http.NewRequest("DELETE", uri, nil)
@@ -71,7 +69,7 @@ func delete(uri string, c ConfigService) (*models.Error, error) {
 		return nil, err
 	}
 
-	var respErr models.Error
+	var respErr Error
 	err = json.Unmarshal(body, &respErr)
 	if err != nil {
 		return nil, err
@@ -80,8 +78,8 @@ func delete(uri string, c ConfigService) (*models.Error, error) {
 	return &respErr, nil
 }
 
-func buildErrorResponse(errorStr string) *models.Error {
-	err := models.Error{Message: &errorStr}
+func buildErrorResponse(errorStr string) *Error {
+	err := Error{Message: &errorStr}
 	return &err
 }
 
