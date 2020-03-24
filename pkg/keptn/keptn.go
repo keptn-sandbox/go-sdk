@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cloudevents/sdk-go/pkg/cloudevents"
+	"gopkg.in/yaml.v2"
 	"os"
 	"strings"
 )
@@ -23,6 +24,16 @@ type Keptn struct {
 	eventBrokerURL     string
 	useLocalFileSystem bool
 	resourceHandler    *ResourceHandler
+}
+
+// Shipyard defines the name, deployment strategy and test strategy of each stage
+type Shipyard struct {
+	Stages []struct {
+		Name                string `json:"name" yaml:"name"`
+		DeploymentStrategy  string `json:"deployment_strategy" yaml:"deployment_strategy"`
+		TestStrategy        string `json:"test_strategy,omitempty" yaml:"test_strategy"`
+		RemediationStrategy string `json:"remediation_strategy,omitempty" yaml:"remediation_strategy"`
+	} `json:"stages" yaml:"stages"`
 }
 
 const configurationServiceURL = "configuration-service:8080"
@@ -63,6 +74,21 @@ func NewKeptn(incomingEvent *cloudevents.Event, opts KeptnOpts) (*Keptn, error) 
 	k.resourceHandler = NewResourceHandler(csURL)
 
 	return k, nil
+}
+
+// GetShipyard returns the shipyard definition of a project
+func (k *Keptn) GetShipyard() (*Shipyard, error) {
+	shipyardResource, err := k.resourceHandler.GetProjectResource(k.KeptnBase.Project, "shipyard.yaml")
+	if err != nil {
+		return nil, err
+	}
+
+	shipyard := Shipyard{}
+	err = yaml.Unmarshal([]byte(shipyardResource.ResourceContent), &shipyard)
+	if err != nil {
+		return nil, err
+	}
+	return &shipyard, nil
 }
 
 func (k *Keptn) GetKeptnResource(resource string) (string, error) {
