@@ -1,0 +1,4 @@
+vendor
+*.xml
+*.iml
+*.idea
