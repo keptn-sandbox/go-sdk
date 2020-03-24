@@ -1,18 +1,42 @@
 package keptn
 
 import (
+	"encoding/json"
+	"github.com/cloudevents/sdk-go/pkg/cloudevents"
 	"net/http"
+	"net/http/httptest"
+	"os"
 	"reflect"
 	"testing"
 )
 
 func TestNewKeptn(t *testing.T) {
+	incomingEvent := cloudevents.New(cloudevents.CloudEventsVersionV02)
+	incomingEvent.SetSource("test")
+	incomingEvent.SetExtension("shkeptncontext", "test-context")
+	incomingEvent.SetDataContentType(cloudevents.ApplicationCloudEventsJSON)
+
+	keptnBase := &KeptnBase{
+		Project:            "sockshop",
+		Stage:              "dev",
+		Service:            "carts",
+		TestStrategy:       nil,
+		DeploymentStrategy: nil,
+		Tag:                nil,
+		Image:              nil,
+		Labels:             nil,
+	}
+
+	marshal, _ := json.Marshal(keptnBase)
+	incomingEvent.Data = marshal
+
+	incomingEvent.SetData(marshal)
+	incomingEvent.DataEncoded = true
+	incomingEvent.DataBinary = true
+
 	type args struct {
-		project      string
-		stage        string
-		service      string
-		keptnContext string
-		opts         KeptnOpts
+		incomingEvent *cloudevents.Event
+		opts          KeptnOpts
 	}
 	tests := []struct {
 		name string
@@ -22,16 +46,20 @@ func TestNewKeptn(t *testing.T) {
 		{
 			name: "Get 'in-cluster' Keptn",
 			args: args{
-				project:      "sockshop",
-				stage:        "dev",
-				service:      "carts",
-				keptnContext: "test-context",
-				opts:         KeptnOpts{},
+				incomingEvent: &incomingEvent,
+				opts:          KeptnOpts{},
 			},
 			want: &Keptn{
-				Project:            "sockshop",
-				Stage:              "dev",
-				Service:            "carts",
+				KeptnBase: &KeptnBase{
+					Project:            "sockshop",
+					Stage:              "dev",
+					Service:            "carts",
+					TestStrategy:       nil,
+					DeploymentStrategy: nil,
+					Tag:                nil,
+					Image:              nil,
+					Labels:             nil,
+				},
 				KeptnContext:       "test-context",
 				eventBrokerURL:     defaultEventBrokerURL,
 				useLocalFileSystem: false,
@@ -47,10 +75,7 @@ func TestNewKeptn(t *testing.T) {
 		{
 			name: "Get local Keptn",
 			args: args{
-				project:      "sockshop",
-				stage:        "dev",
-				service:      "carts",
-				keptnContext: "test-context",
+				incomingEvent: &incomingEvent,
 				opts: KeptnOpts{
 					UseLocalFileSystem:      true,
 					ConfigurationServiceURL: "",
@@ -58,9 +83,16 @@ func TestNewKeptn(t *testing.T) {
 				},
 			},
 			want: &Keptn{
-				Project:            "sockshop",
-				Stage:              "dev",
-				Service:            "carts",
+				KeptnBase: &KeptnBase{
+					Project:            "sockshop",
+					Stage:              "dev",
+					Service:            "carts",
+					TestStrategy:       nil,
+					DeploymentStrategy: nil,
+					Tag:                nil,
+					Image:              nil,
+					Labels:             nil,
+				},
 				KeptnContext:       "test-context",
 				eventBrokerURL:     defaultEventBrokerURL,
 				useLocalFileSystem: true,
@@ -76,10 +108,7 @@ func TestNewKeptn(t *testing.T) {
 		{
 			name: "Get Keptn with custom configuration service URL",
 			args: args{
-				project:      "sockshop",
-				stage:        "dev",
-				service:      "carts",
-				keptnContext: "test-context",
+				incomingEvent: &incomingEvent,
 				opts: KeptnOpts{
 					UseLocalFileSystem:      false,
 					ConfigurationServiceURL: "custom-config:8080",
@@ -87,9 +116,16 @@ func TestNewKeptn(t *testing.T) {
 				},
 			},
 			want: &Keptn{
-				Project:            "sockshop",
-				Stage:              "dev",
-				Service:            "carts",
+				KeptnBase: &KeptnBase{
+					Project:            "sockshop",
+					Stage:              "dev",
+					Service:            "carts",
+					TestStrategy:       nil,
+					DeploymentStrategy: nil,
+					Tag:                nil,
+					Image:              nil,
+					Labels:             nil,
+				},
 				KeptnContext:       "test-context",
 				eventBrokerURL:     defaultEventBrokerURL,
 				useLocalFileSystem: false,
@@ -105,10 +141,7 @@ func TestNewKeptn(t *testing.T) {
 		{
 			name: "Get Keptn with custom event brokerURL",
 			args: args{
-				project:      "sockshop",
-				stage:        "dev",
-				service:      "carts",
-				keptnContext: "test-context",
+				incomingEvent: &incomingEvent,
 				opts: KeptnOpts{
 					UseLocalFileSystem:      false,
 					ConfigurationServiceURL: "custom-config:8080",
@@ -116,9 +149,16 @@ func TestNewKeptn(t *testing.T) {
 				},
 			},
 			want: &Keptn{
-				Project:            "sockshop",
-				Stage:              "dev",
-				Service:            "carts",
+				KeptnBase: &KeptnBase{
+					Project:            "sockshop",
+					Stage:              "dev",
+					Service:            "carts",
+					TestStrategy:       nil,
+					DeploymentStrategy: nil,
+					Tag:                nil,
+					Image:              nil,
+					Labels:             nil,
+				},
 				KeptnContext:       "test-context",
 				eventBrokerURL:     "custom-eb:8080",
 				useLocalFileSystem: false,
@@ -134,7 +174,7 @@ func TestNewKeptn(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewKeptn(tt.args.project, tt.args.stage, tt.args.service, tt.args.keptnContext, tt.args.opts); !reflect.DeepEqual(got, tt.want) {
+			if got, _ := NewKeptn(tt.args.incomingEvent, tt.args.opts); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewKeptn() = %v, want %v", got, tt.want)
 			}
 		})
@@ -142,10 +182,24 @@ func TestNewKeptn(t *testing.T) {
 }
 
 func TestKeptn_GetKeptnResource(t *testing.T) {
+
+	ts := httptest.NewServer(
+		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(200)
+
+			res := &Resource{
+				ResourceContent: "dGVzdC1jb250ZW50Cg==",
+				ResourceURI:     stringp("test-resource.file"),
+			}
+			marshal, _ := json.Marshal(res)
+			w.Write(marshal)
+		}),
+	)
+	defer ts.Close()
+
 	type fields struct {
-		Project            string
-		Stage              string
-		Service            string
+		KeptnBase          *KeptnBase
 		KeptnContext       string
 		eventBrokerURL     string
 		useLocalFileSystem bool
@@ -161,14 +215,35 @@ func TestKeptn_GetKeptnResource(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{
+			name: "get a resource",
+			fields: fields{
+				KeptnBase: &KeptnBase{
+					Project:            "sockshop",
+					Stage:              "dev",
+					Service:            "carts",
+					TestStrategy:       nil,
+					DeploymentStrategy: nil,
+					Tag:                nil,
+					Image:              nil,
+					Labels:             nil,
+				},
+				eventBrokerURL:     "",
+				useLocalFileSystem: false,
+				resourceHandler:    NewResourceHandler(ts.URL),
+			},
+			args: args{
+				resource: "test-resource.file",
+			},
+			want:    "test-content",
+			wantErr: false,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			k := &Keptn{
-				Project:            tt.fields.Project,
-				Stage:              tt.fields.Stage,
-				Service:            tt.fields.Service,
+				KeptnBase:          tt.fields.KeptnBase,
 				KeptnContext:       tt.fields.KeptnContext,
 				eventBrokerURL:     tt.fields.eventBrokerURL,
 				useLocalFileSystem: tt.fields.useLocalFileSystem,
@@ -182,6 +257,11 @@ func TestKeptn_GetKeptnResource(t *testing.T) {
 			if got != tt.want {
 				t.Errorf("GetKeptnResource() got = %v, want %v", got, tt.want)
 			}
+			_ = os.RemoveAll(tt.args.resource)
 		})
 	}
+}
+
+func stringp(s string) *string {
+	return &s
 }

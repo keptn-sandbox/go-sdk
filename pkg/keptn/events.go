@@ -57,6 +57,24 @@ const InternalGetSLIEventType = "sh.keptn.internal.event.get-sli"
 // InternalGetSLIDoneEventType is a CloudEvent for submitting SLI values
 const InternalGetSLIDoneEventType = "sh.keptn.internal.event.get-sli.done"
 
+// KeptnBase contains properties that are shared among most Keptn events
+type KeptnBase struct {
+	Project string `json:"project"`
+	// Service is the name of the new service
+	Service string `json:"service"`
+	// Stage is the name of the stage
+	Stage        string  `json:"stage"`
+	TestStrategy *string `json:"teststrategy,omitempty"`
+	// DeploymentStrategy is the deployment strategy
+	DeploymentStrategy *string `json:"deploymentstrategy,omitempty"`
+	// Tag of the new deployed artifact
+	Tag *string `json:"tag,omitempty"`
+	// Image of the new deployed artifact
+	Image *string `json:"image,omitempty"`
+	// Labels contains labels
+	Labels map[string]string `json:"labels"`
+}
+
 // ProjectCreateEventData represents the data for creating a new project
 type ProjectCreateEventData struct {
 	// Project is the name of the project
@@ -325,8 +343,8 @@ type InternalGetSLIDoneEventData struct {
 //
 // Sends a ConfigurationChangeEventType = "sh.keptn.event.configuration.change"
 //
-func (k *Keptn) SendConfigurationChangeEvent(incomingEvent *cloudevents.Event, labels map[string]string) error {
-	source, _ := url.Parse("jenkins-service")
+func (k *Keptn) SendConfigurationChangeEvent(incomingEvent *cloudevents.Event, labels map[string]string, eventSource string) error {
+	source, _ := url.Parse(eventSource)
 	contentType := "application/json"
 
 	configurationChangeData := ConfigurationChangeEventData{}
@@ -336,14 +354,14 @@ func (k *Keptn) SendConfigurationChangeEvent(incomingEvent *cloudevents.Event, l
 		incomingEvent.DataAs(&configurationChangeData)
 	}
 
-	if k.Project != "" {
-		configurationChangeData.Project = k.Project
+	if k.KeptnBase.Project != "" {
+		configurationChangeData.Project = k.KeptnBase.Project
 	}
-	if k.Service != "" {
-		configurationChangeData.Service = k.Service
+	if k.KeptnBase.Service != "" {
+		configurationChangeData.Service = k.KeptnBase.Service
 	}
-	if k.Stage != "" {
-		configurationChangeData.Stage = k.Stage
+	if k.KeptnBase.Stage != "" {
+		configurationChangeData.Stage = k.KeptnBase.Stage
 	}
 	if labels != nil {
 		configurationChangeData.Labels = labels
@@ -369,8 +387,8 @@ func (k *Keptn) SendConfigurationChangeEvent(incomingEvent *cloudevents.Event, l
 //
 // Sends a DeploymentFinishedEventType = "sh.keptn.events.deployment-finished"
 //
-func (k *Keptn) SendDeploymentFinishedEvent(incomingEvent *cloudevents.Event, teststrategy, deploymentstrategy, image, tag, deploymentURILocal, deploymentURIPublic string, labels map[string]string) error {
-	source, _ := url.Parse("jenkins-service")
+func (k *Keptn) SendDeploymentFinishedEvent(incomingEvent *cloudevents.Event, teststrategy, deploymentstrategy, image, tag, deploymentURILocal, deploymentURIPublic string, labels map[string]string, eventSource string) error {
+	source, _ := url.Parse(eventSource)
 	contentType := "application/json"
 
 	deploymentFinishedData := DeploymentFinishedEventData{}
@@ -380,14 +398,14 @@ func (k *Keptn) SendDeploymentFinishedEvent(incomingEvent *cloudevents.Event, te
 		incomingEvent.DataAs(&deploymentFinishedData)
 	}
 
-	if k.Project != "" {
-		deploymentFinishedData.Project = k.Project
+	if k.KeptnBase.Project != "" {
+		deploymentFinishedData.Project = k.KeptnBase.Project
 	}
-	if k.Service != "" {
-		deploymentFinishedData.Service = k.Service
+	if k.KeptnBase.Service != "" {
+		deploymentFinishedData.Service = k.KeptnBase.Service
 	}
-	if k.Stage != "" {
-		deploymentFinishedData.Stage = k.Stage
+	if k.KeptnBase.Stage != "" {
+		deploymentFinishedData.Stage = k.KeptnBase.Stage
 	}
 	if teststrategy != "" {
 		deploymentFinishedData.TestStrategy = teststrategy
@@ -435,8 +453,8 @@ func (k *Keptn) SendDeploymentFinishedEvent(incomingEvent *cloudevents.Event, te
 //
 // Sends a TestsFinishedEventType = "sh.keptn.events.tests-finished"
 //
-func (k *Keptn) SendTestsFinishedEvent(incomingEvent *cloudevents.Event, teststrategy, deploymentstrategy string, startedAt time.Time, result string, labels map[string]string) error {
-	source, _ := url.Parse("jenkins-service")
+func (k *Keptn) SendTestsFinishedEvent(incomingEvent *cloudevents.Event, teststrategy, deploymentstrategy string, startedAt time.Time, result string, labels map[string]string, eventSource string) error {
+	source, _ := url.Parse(eventSource)
 	contentType := "application/json"
 
 	testFinishedData := TestsFinishedEventData{}
@@ -446,14 +464,14 @@ func (k *Keptn) SendTestsFinishedEvent(incomingEvent *cloudevents.Event, teststr
 		incomingEvent.DataAs(&testFinishedData)
 	}
 
-	if k.Project != "" {
-		testFinishedData.Project = k.Project
+	if k.KeptnBase.Project != "" {
+		testFinishedData.Project = k.KeptnBase.Project
 	}
-	if k.Service != "" {
-		testFinishedData.Service = k.Service
+	if k.KeptnBase.Service != "" {
+		testFinishedData.Service = k.KeptnBase.Service
 	}
-	if k.Stage != "" {
-		testFinishedData.Stage = k.Stage
+	if k.KeptnBase.Stage != "" {
+		testFinishedData.Stage = k.KeptnBase.Stage
 	}
 	if teststrategy != "" {
 		testFinishedData.TestStrategy = teststrategy
