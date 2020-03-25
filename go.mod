@@ -1,4 +1,4 @@
-module github.com/keptn-sandbox/go-sdk
+module github.com/keptn-sandbox/sdk-go
 
 go 1.13
 
