@@ -512,6 +512,10 @@ func (k *Keptn) SendTestsFinishedEvent(incomingEvent *cloudevents.Event, teststr
 // Sends a CloudEvent to the event broker
 //
 func (k *Keptn) sendCloudEvent(event cloudevents.Event) error {
+	if k.useLocalFileSystem {
+		log.Println(fmt.Printf("%v", event.Data))
+		return nil
+	}
 	transport, err := cloudeventshttp.New(
 		cloudeventshttp.WithTarget(k.eventBrokerURL),
 		cloudeventshttp.WithEncoding(cloudeventshttp.StructuredV02),
